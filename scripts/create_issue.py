@@ -1,5 +1,9 @@
-# Use together with `pageviews.py`
-# python scripts/pageviews.py | head -n 150 | grep -v whats | cut -d ' ' -f 2 | sed 's/\.html/\.po/g' | xargs -I '{}' python scripts/create_issue.py '{}'
+"""
+Run this script with one variable:
+ - PO filename to create an issue for that file
+ - or '--all' to create the issues for all untranslated files that doesn't have an open issue already
+ - or '--one' to create the next one issue
+"""
 
 import os
 import sys
