@@ -18,7 +18,7 @@ PENDING_ENTRIES_FOR_GOOD_FIRST_ISSUE = 5
 GOOD_FIRST_ISSUE_LABEL = "good first_issue"
 ISSUE_LABELS = [PYTHON_VERSION]
 ISSUE_TITLE = 'Translate `{pofilename}`'
-ISSUE_BODY = '''This needs to reach 100% translated.
+ISSUE_BODY = '''This file is {translated_percent}% translated and needs to reach 100%.
 
 The rendered version of this file will be available at https://docs.python.org/es/{python_version}/{urlfile} once translated.
 Meanwhile, the English version is shown.
@@ -26,7 +26,8 @@ Meanwhile, the English version is shown.
 Current stats for `{pofilename}`:
 
 - Total entries: {pofile_entries}
-- Entries that need work: {pending_entries} - ({pofile_percent_translated}%)
+
+- Entries that need work: {pending_entries} - ({pending_percent}%)
   - Fuzzy: {pofile_fuzzy}
   - Untranslated: {pofile_untranslated}
 
@@ -92,11 +93,12 @@ class GitHubIssueGenerator:
         urlfile = pofilename.replace('.po', '.html')
         title = ISSUE_TITLE.format(pofilename=pofilename)
         body = ISSUE_BODY.format(
+            translated_percent=pofile.percent_translated,
             python_version=PYTHON_VERSION,
             urlfile=urlfile,
             pofilename=pofilename,
             pofile_fuzzy=pofile.fuzzy,
-            pofile_percent_translated=pofile.percent_translated,
+            pending_percent=100 - pofile.percent_translated,
             pofile_entries=pofile.entries,
             pofile_untranslated=pofile.untranslated,
             pending_entries=pending_entries,
