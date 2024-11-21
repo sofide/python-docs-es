@@ -14,7 +14,9 @@ from github import Github
 from potodo.potodo import PoFileStats
 
 PYTHON_VERSION = "3.13"
-ISSUE_LABELS = [PYTHON_VERSION, "good first issue"]
+PENDING_ENTRIES_FOR_GOOD_FIRST_ISSUE = 5
+GOOD_FIRST_ISSUE_LABEL = "good first_issue"
+ISSUE_LABELS = [PYTHON_VERSION]
 ISSUE_TITLE = 'Translate `{pofilename}`'
 ISSUE_BODY = '''This needs to reach 100% translated.
 
@@ -23,10 +25,10 @@ Meanwhile, the English version is shown.
 
 Current stats for `{pofilename}`:
 
-- Fuzzy: {pofile_fuzzy}
-- Percent translated: {pofile_percent_translated}%
-- Entries: {pofile_entries}
-- Untranslated: {pofile_untranslated}
+- Total entries: {pofile_entries}
+- Entries that need work: {pending_entries} - ({pofile_percent_translated}%)
+  - Fuzzy: {pofile_fuzzy}
+  - Untranslated: {pofile_untranslated}
 
 Please, comment here if you want this file to be assigned to you and a member will assign it to you as soon as possible, so you can start working on it.
 
@@ -79,6 +81,13 @@ class GitHubIssueGenerator:
         self.check_issue_not_already_existing(pofilename)
         self.check_translation_is_pending(pofile)
 
+        pending_entries = pofile.fuzzy + pofile.untranslated
+
+        if pending_entries <= PENDING_ENTRIES_FOR_GOOD_FIRST_ISSUE:
+            labels = ISSUE_LABELS + [GOOD_FIRST_ISSUE_LABEL]
+        else:
+            labels = ISSUE_LABELS
+
         urlfile = pofilename.replace('.po', '.html')
         title = ISSUE_TITLE.format(pofilename=pofilename)
         body = ISSUE_BODY.format(
@@ -89,9 +98,10 @@ class GitHubIssueGenerator:
             pofile_percent_translated=pofile.percent_translated,
             pofile_entries=pofile.entries,
             pofile_untranslated=pofile.untranslated,
+            pending_entries=pending_entries,
         )
         # https://pygithub.readthedocs.io/en/latest/github_objects/Repository.html#github.Repository.Repository.create_issue
-        issue = self.repo.create_issue(title=title, body=body, labels=ISSUE_LABELS)
+        issue = self.repo.create_issue(title=title, body=body, labels=labels)
 
         return issue
 
