@@ -66,10 +66,11 @@ class GitHubIssueGenerator:
 
     @staticmethod
     def check_translation_is_pending(pofile):
-        if pofile.fuzzy == 0 and any([
-            pofile.translated == pofile.entries,
-            pofile.untranslated == 0,
-        ]):
+        no_fuzzy_translations = pofile.fuzzy == 0
+        translated_match_all_entries = pofile.translated == pofile.entries
+        no_untranslated_entries_left = pofile.untranslated == 0
+
+        if no_fuzzy_translations and (translated_match_all_entries or no_untranslated_entries_left):
             print(f'Skipping {pofile.filename}. The file is 100% translated already.')
             raise PoFileAlreadyTranslated
 
