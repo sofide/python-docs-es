@@ -15,7 +15,7 @@ from potodo.potodo import PoFileStats
 
 PYTHON_VERSION = "3.13"
 PENDING_ENTRIES_FOR_GOOD_FIRST_ISSUE = 5
-GOOD_FIRST_ISSUE_LABEL = "good first_issue"
+GOOD_FIRST_ISSUE_LABEL = "good first issue"
 ISSUE_LABELS = [PYTHON_VERSION]
 ISSUE_TITLE = 'Translate `{pofilename}`'
 ISSUE_BODY = '''This file is {translated_percent}% translated and needs to reach 100%.
