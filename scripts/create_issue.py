@@ -13,10 +13,6 @@ from pathlib import Path
 from github import Github
 from potodo.potodo import PoFileStats
 
-
-g = Github(os.environ.get('GITHUB_TOKEN'))
-repo = g.get_repo('python/python-docs-es')
-
 PYTHON_VERSION = "3.13"
 ISSUE_LABELS = [PYTHON_VERSION, "good first issue"]
 ISSUE_TITLE = 'Translate `{pofilename}`'
@@ -45,74 +41,84 @@ class PoFileAlreadyTranslated(Exception):
     """Given PO file is already 100% translated"""
 
 
+class GitHubIssueGenerator:
+    def __init__(self):
+        g = Github(os.environ.get('GITHUB_TOKEN'))
+        self.repo = g.get_repo('python/python-docs-es')
+        self._issues = None
 
-def check_issue_not_already_existing(pofilename):
-    issues = repo.get_issues(state='open')
-    for issue in issues:
-        if pofilename in issue.title:
+    @property
+    def issues(self):
+        if self._issues is None:
+            self._issues = self.repo.get_issues(state='open')
 
-            print(f'Skipping {pofilename}. There is a similar issue already created at {issue.html_url}')
-            raise IssueAlreadyExistingError()
+        return self._issues
 
+    def check_issue_not_already_existing(self, pofilename):
+        for issue in self.issues:
+            if pofilename in issue.title:
 
-def check_translation_is_pending(pofile):
-    if pofile.fuzzy == 0 and any([
-        pofile.translated == pofile.entries,
-        pofile.untranslated == 0,
-    ]):
-        print(f'Skipping {pofile.filename}. The file is 100% translated already.')
-        raise PoFileAlreadyTranslated()
-
-
-
-def issue_generator(pofilename):
-    pofile = PoFileStats(Path(pofilename))
-
-    check_issue_not_already_existing(pofilename)
-    check_translation_is_pending(pofile)
-
-    urlfile = pofilename.replace('.po', '.html')
-    title = ISSUE_TITLE.format(pofilename=pofilename)
-    body = ISSUE_BODY.format(
-        python_version=PYTHON_VERSION,
-        urlfile=urlfile,
-        pofilename=pofilename,
-        pofile_fuzzy=pofile.fuzzy,
-        pofile_percent_translated=pofile.percent_translated,
-        pofile_entries=pofile.entries,
-        pofile_untranslated=pofile.untranslated,
-    )
-    # https://pygithub.readthedocs.io/en/latest/github_objects/Repository.html#github.Repository.Repository.create_issue
-    issue = repo.create_issue(title=title, body=body, labels=ISSUE_LABELS)
-
-    return issue
-
-def create_issues(only_one=False):
-    po_files = glob("**/*.po")
-    existing_issue_counter = 0
-    already_translated_counter = 0
-    created_issues_counter = 0
-
-    print(f"TOTAL PO FILES: {len(po_files)}")
-
-    for pofilename in po_files:
-        try:
-            issue = issue_generator(pofilename)
-            created_issues_counter += 1
-            print(f'Issue "{issue.title}" created at {issue.html_url}')
-            if only_one:
-                break
-        except IssueAlreadyExistingError:
-            existing_issue_counter += 1
-        except PoFileAlreadyTranslated:
-            already_translated_counter += 1
-
-    print("Stats:")
-    print(f"- Existing issues: {existing_issue_counter}")
-    print(f"- Already translated files: {already_translated_counter}")
-    print(f"- Created issues: {created_issues_counter}")
+                print(f'Skipping {pofilename}. There is a similar issue already created at {issue.html_url}')
+                raise IssueAlreadyExistingError
 
 
+    @staticmethod
+    def check_translation_is_pending(pofile):
+        if pofile.fuzzy == 0 and any([
+            pofile.translated == pofile.entries,
+            pofile.untranslated == 0,
+        ]):
+            print(f'Skipping {pofile.filename}. The file is 100% translated already.')
+            raise PoFileAlreadyTranslated
+
+
+
+    def issue_generator(self, pofilename):
+        pofile = PoFileStats(Path(pofilename))
+
+        self.check_issue_not_already_existing(pofilename)
+        self.check_translation_is_pending(pofile)
+
+        urlfile = pofilename.replace('.po', '.html')
+        title = ISSUE_TITLE.format(pofilename=pofilename)
+        body = ISSUE_BODY.format(
+            python_version=PYTHON_VERSION,
+            urlfile=urlfile,
+            pofilename=pofilename,
+            pofile_fuzzy=pofile.fuzzy,
+            pofile_percent_translated=pofile.percent_translated,
+            pofile_entries=pofile.entries,
+            pofile_untranslated=pofile.untranslated,
+        )
+        # https://pygithub.readthedocs.io/en/latest/github_objects/Repository.html#github.Repository.Repository.create_issue
+        issue = self.repo.create_issue(title=title, body=body, labels=ISSUE_LABELS)
+
+        return issue
+
+    def create_issues(self, only_one=False):
+        po_files = glob("**/*.po")
+        existing_issue_counter = 0
+        already_translated_counter = 0
+        created_issues_counter = 0
+
+        print(f"TOTAL PO FILES: {len(po_files)}")
+
+        for pofilename in po_files:
+            try:
+                issue = self.issue_generator(pofilename)
+                created_issues_counter += 1
+                print(f'Issue "{issue.title}" created at {issue.html_url}')
+                if only_one:
+                    break
+            except IssueAlreadyExistingError:
+                existing_issue_counter += 1
+            except PoFileAlreadyTranslated:
+                already_translated_counter += 1
+
+        print("Stats:")
+        print(f"- Existing issues: {existing_issue_counter}")
+        print(f"- Already translated files: {already_translated_counter}")
+        print(f"- Created issues: {created_issues_counter}")
 
 
 def main():
@@ -122,15 +128,17 @@ def main():
 
     arg = sys.argv[1]
 
+    gh = GitHubIssueGenerator()
+
     if arg == "--all":
-        create_issues()
+        gh.create_issues()
 
     elif arg == "--one":
-        create_issues(only_one=True)
+        gh.create_issues(only_one=True)
 
     else:
         try:
-            issue_generator(arg)
+            gh.issue_generator(arg)
         except FileNotFoundError:
             raise Exception(error_msg)
 
