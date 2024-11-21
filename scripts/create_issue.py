@@ -33,8 +33,8 @@ for issue in issues:
             sys.exit(1)
 
 if pofile.fuzzy == 0 and any([
-    pofile.translated_nb == pofile.po_file_size,
-    pofile.untranslated_nb == 0,
+    pofile.translated == pofile.entries,
+    pofile.untranslated == 0,
 ]):
     print(f'Skipping {pofilename}. The file is 100% translated already.')
     sys.exit(1)
@@ -51,10 +51,10 @@ Meanwhile, the English version is shown.
 
 Current stats for `{pofilename}`:
 
-- Fuzzy: {pofile.fuzzy_nb}
+- Fuzzy: {pofile.fuzzy}
 - Percent translated: {pofile.percent_translated}%
-- Entries: {pofile.translated_nb} / {pofile.po_file_size}
-- Untranslated: {pofile.untranslated_nb}
+- Entries: {pofile.entries}
+- Untranslated: {pofile.untranslated}
 
 Please, comment here if you want this file to be assigned to you and a member will assign it to you as soon as possible, so you can start working on it.
 
