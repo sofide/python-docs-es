@@ -155,7 +155,7 @@ msgstr "Encadenamiento de descriptores :class:`classmethod` (:gh:`89519`)"
 
 #: ../Doc/deprecations/pending-removal-in-3.13.rst:41
 msgid ":mod:`importlib.resources` deprecated methods:"
-msgstr "métodos deprecados de :mod:`importlib.resources`:"
+msgstr "métodos obsoletos de :mod:`importlib.resources`:"
 
 #: ../Doc/deprecations/pending-removal-in-3.13.rst:43
 msgid "``contents()``"
